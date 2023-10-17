@@ -9,9 +9,13 @@ import static kr.co.zerobase.account.type.ValidationMessage.USER_ID_NOT_NULL;
 import static kr.co.zerobase.account.type.ValidationMessage.USE_BALANCE_AMOUNT_MAX_1_000_000_000;
 import static kr.co.zerobase.account.type.ValidationMessage.USE_BALANCE_AMOUNT_MIN_10;
 import static kr.co.zerobase.account.type.ValidationMessage.USE_BALANCE_AMOUNT_NOT_NULL;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -22,9 +26,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import kr.co.zerobase.account.dto.TransactionDto;
 import kr.co.zerobase.account.dto.UseBalance;
+import kr.co.zerobase.account.exception.AccountException;
 import kr.co.zerobase.account.service.TransactionService;
+import kr.co.zerobase.account.type.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -71,6 +78,40 @@ class TransactionControllerTest {
             .andExpect(jsonPath("$.transactionId").value("transactionId"))
             .andExpect(jsonPath("$.amount").value(1000L))
             .andDo(print());
+    }
+
+    @Test
+    @DisplayName("잔액 사용 실패 - 실패 거래 기록")
+    void failUseBalance_saveFailedCancelTransaction() throws Exception {
+        // given
+        given(transactionService.useBalance(anyLong(), anyString(), anyLong()))
+            .willThrow(new AccountException(INVALID_REQUEST));
+
+        // when
+        assertThrows(AccountException.class,
+            () -> transactionService.useBalance(1L, "1234567890", 1000L));
+
+        ArgumentCaptor<String> accountNumberCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Long> amountCaptor = ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<ErrorCode> errorCodeCaptor = ArgumentCaptor.forClass(ErrorCode.class);
+
+        // then
+        mockMvc.perform(post("/transactions/use")
+            .contentType(APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(
+                UseBalance.RequestDto.builder()
+                    .userId(1L)
+                    .accountNumber("1000000000")
+                    .amount(1000L)
+                    .build())));
+
+        verify(transactionService, times(1)).saveFailedUseTransaction(
+            accountNumberCaptor.capture(),
+            amountCaptor.capture(),
+            errorCodeCaptor.capture());
+        assertEquals("1000000000", accountNumberCaptor.getValue());
+        assertEquals(1000L, amountCaptor.getValue());
+        assertEquals(INVALID_REQUEST, errorCodeCaptor.getValue());
     }
 
     @Test
