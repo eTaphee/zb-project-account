@@ -146,6 +146,7 @@ class AccountControllerTest {
     @Test
     @DisplayName("계좌 생성 실패 - 사용자 없음")
     void failCreateAccount_UserNotFound() throws Exception {
+        // TODO: 해당 케이스를 controller 테스트에서 작성하는게 맞을까?
         // given
         // when
         // then
@@ -154,6 +155,7 @@ class AccountControllerTest {
     @Test
     @DisplayName("계좌 생성 실패 - 사용자당 생성 개수 초과")
     void failCreateAccount_MaxAccountPerUser() {
+        // TODO: 해당 케이스를 controller 테스트에서 작성하는게 맞을까?
         // given
         // when
         // then

@@ -1,6 +1,7 @@
 package kr.co.zerobase.account.domain;
 
 import java.time.LocalDateTime;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -22,6 +23,7 @@ public class Account extends BaseEntity {
     @ManyToOne
     private AccountUser accountUser;
 
+    @Column(unique = true)
     private String accountNumber;
 
     @Enumerated(EnumType.STRING)

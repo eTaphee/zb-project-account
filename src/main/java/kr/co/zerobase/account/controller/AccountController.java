@@ -1,6 +1,7 @@
 package kr.co.zerobase.account.controller;
 
 import javax.validation.Valid;
+import kr.co.zerobase.account.aop.CreateAccountLock;
 import kr.co.zerobase.account.dto.CreateAccount;
 import kr.co.zerobase.account.service.AccountService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class AccountController {
     private final AccountService accountService;
 
     @PostMapping
+    @CreateAccountLock
     public CreateAccount.Response createAccount(@Valid @RequestBody CreateAccount.Request request) {
         return CreateAccount.Response.from(
             accountService.createAccount(

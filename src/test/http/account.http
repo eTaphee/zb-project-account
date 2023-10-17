@@ -6,3 +6,21 @@ Content-Type: application/json
   "userId": 1,
   "initialBalance": 100
 }
+
+### create account2
+POST http://localhost:8080/accounts
+Content-Type: application/json
+
+{
+"userId": 1,
+"initialBalance": 1000
+}
+
+### create account3
+POST http://localhost:8080/accounts
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "initialBalance": 1000
+}
