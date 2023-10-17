@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -12,9 +13,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 import kr.co.zerobase.account.dto.AccountDto;
-import kr.co.zerobase.account.dto.CreateAccount;
-import kr.co.zerobase.account.dto.DeleteAccount;
+import kr.co.zerobase.account.dto.DeleteAccount.RequestDto;
 import kr.co.zerobase.account.service.AccountService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -53,7 +55,7 @@ class AccountControllerTest {
                 post("/accounts")
                     .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(
-                        CreateAccount.Request.builder()
+                        kr.co.zerobase.account.dto.CreateAccount.RequestDto.builder()
                             .userId(1L)
                             .initialBalance(100L)
                             .build())))
@@ -73,7 +75,7 @@ class AccountControllerTest {
                 post("/accounts")
                     .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(
-                        CreateAccount.Request.builder()
+                        kr.co.zerobase.account.dto.CreateAccount.RequestDto.builder()
                             .initialBalance(100L)
                             .build())))
             .andExpect(status().isBadRequest())
@@ -93,7 +95,7 @@ class AccountControllerTest {
                 post("/accounts")
                     .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(
-                        CreateAccount.Request.builder()
+                        kr.co.zerobase.account.dto.CreateAccount.RequestDto.builder()
                             .userId(0L)
                             .initialBalance(100L)
                             .build())))
@@ -114,7 +116,7 @@ class AccountControllerTest {
                 post("/accounts")
                     .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(
-                        CreateAccount.Request.builder()
+                        kr.co.zerobase.account.dto.CreateAccount.RequestDto.builder()
                             .userId(1L)
                             .build())))
             .andExpect(status().isBadRequest())
@@ -134,7 +136,7 @@ class AccountControllerTest {
                 post("/accounts")
                     .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(
-                        CreateAccount.Request.builder()
+                        kr.co.zerobase.account.dto.CreateAccount.RequestDto.builder()
                             .userId(1L)
                             .initialBalance(-1L)
                             .build())))
@@ -181,13 +183,41 @@ class AccountControllerTest {
                 delete("/accounts/1234567890")
                     .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(
-                        DeleteAccount.Request.builder()
+                        RequestDto.builder()
                             .userId(1L)
                             .build())))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.userId").value(1))
             .andExpect(jsonPath("$.accountNumber").value("1234567890"))
             .andExpect(jsonPath("$.unregisteredAt").isNotEmpty())
+            .andDo(print());
+    }
+
+    @Test
+    @DisplayName("계좌 확인 성공")
+    void successGetAccounts() throws Exception {
+        // given
+        List<AccountDto> accounts = Arrays.asList(
+            AccountDto.builder().accountNumber("1000000000").balance(0L).build(),
+            AccountDto.builder().accountNumber("2000000000").balance(100L).build(),
+            AccountDto.builder().accountNumber("3000000000").balance(2000L).build()
+        );
+
+        given(accountService.getAccountsByUserId(anyLong()))
+            .willReturn(accounts);
+
+        // when
+        // then
+        mockMvc.perform(
+                get("/accounts?user_id=1")
+                    .contentType(APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].accountNumber").value("1000000000"))
+            .andExpect(jsonPath("$[0].balance").value(0))
+            .andExpect(jsonPath("$[1].accountNumber").value("2000000000"))
+            .andExpect(jsonPath("$[1].balance").value(100))
+            .andExpect(jsonPath("$[2].accountNumber").value("3000000000"))
+            .andExpect(jsonPath("$[2].balance").value(2000))
             .andDo(print());
     }
 }

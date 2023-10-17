@@ -1,5 +1,6 @@
 package kr.co.zerobase.account.repository;
 
+import java.util.List;
 import java.util.Optional;
 import kr.co.zerobase.account.domain.Account;
 import kr.co.zerobase.account.domain.AccountUser;
@@ -12,4 +13,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Integer countByAccountUser(AccountUser accountUser);
 
     Optional<Account> findByAccountNumber(String accountNumber);
+
+    List<Account> findAllByAccountUser(AccountUser accountUser);
 }

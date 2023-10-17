@@ -10,9 +10,11 @@ import static kr.co.zerobase.account.type.ErrorCode.USER_ACCOUNT_UN_MATCH;
 import static kr.co.zerobase.account.type.ErrorCode.USER_NOT_FOUND;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
+import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import kr.co.zerobase.account.domain.Account;
 import kr.co.zerobase.account.domain.AccountUser;
@@ -86,6 +88,16 @@ public class AccountService {
         accountRepository.save(account);
 
         return AccountDto.fromEntity(account);
+    }
+
+    @Transactional
+    public List<AccountDto> getAccountsByUserId(long userId) {
+        AccountUser accountUser = getAccountUser(userId);
+
+        List<Account> accounts = accountRepository.findAllByAccountUser(accountUser);
+
+        return accounts.stream().map(AccountDto::fromEntity)
+            .collect(Collectors.toList());
     }
 
     private void validateCreateAccount(AccountUser accountUser) {

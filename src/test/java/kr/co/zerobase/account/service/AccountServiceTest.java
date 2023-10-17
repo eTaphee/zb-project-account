@@ -17,6 +17,8 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import kr.co.zerobase.account.domain.Account;
 import kr.co.zerobase.account.domain.AccountUser;
@@ -238,5 +240,49 @@ class AccountServiceTest {
 
         // then
         assertEquals(ACCOUNT_ALREADY_UNREGISTERED, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("계좌 확인 성공")
+    void successGetAccountsByUserId() {
+        // given
+        List<Account> accounts = Arrays.asList(
+            Account.builder().accountUser(pobi).accountNumber("1000000000").balance(0L).build(),
+            Account.builder().accountUser(pobi).accountNumber("2000000000").balance(100L).build(),
+            Account.builder().accountUser(pobi).accountNumber("3000000000").balance(2000L).build()
+        );
+
+        given(accountUserRepository.findById(anyLong()))
+            .willReturn(Optional.of(pobi));
+
+        given(accountRepository.findAllByAccountUser(any()))
+            .willReturn(accounts);
+
+        // when
+        List<AccountDto> accountDtos = accountService.getAccountsByUserId(1L);
+
+        // then
+        assertEquals(3, accountDtos.size());
+        assertEquals("1000000000", accountDtos.get(0).getAccountNumber());
+        assertEquals(0L, accountDtos.get(0).getBalance());
+        assertEquals("2000000000", accountDtos.get(1).getAccountNumber());
+        assertEquals(100L, accountDtos.get(1).getBalance());
+        assertEquals("3000000000", accountDtos.get(2).getAccountNumber());
+        assertEquals(2000L, accountDtos.get(2).getBalance());
+    }
+
+    @Test
+    @DisplayName("계좌 확인 실패 - 사용자 없음")
+    void failGetAccountsByUserId_UserNotFound() {
+        // given
+        given(accountUserRepository.findById(anyLong()))
+            .willReturn(Optional.empty());
+
+        // when
+        AccountException accountException = assertThrows(AccountException.class,
+            () -> accountService.getAccountsByUserId(1L));
+
+        // then
+        assertEquals(USER_NOT_FOUND, accountException.getErrorCode());
     }
 }

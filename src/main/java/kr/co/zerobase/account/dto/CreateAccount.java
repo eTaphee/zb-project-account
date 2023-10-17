@@ -13,7 +13,7 @@ public class CreateAccount {
     @Getter
     @Builder
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
-    public static class Request {
+    public static class RequestDto {
         @NotNull(message = "사용자 아이디는 빈 값일 수 없습니다.")
         @Min(value = 1, message = "사용자 아이디는 1 이상이어야 합니다.")
         private final Long userId;
@@ -26,13 +26,13 @@ public class CreateAccount {
     @Getter
     @Builder
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
-    public static class Response {
+    public static class ResponseDto {
         private final Long userId;
         private final String accountNumber;
         private final LocalDateTime registeredAt;
 
-        public static Response from(AccountDto accountDto) {
-            return Response.builder()
+        public static ResponseDto from(AccountDto accountDto) {
+            return ResponseDto.builder()
                 .userId(accountDto.getUserId())
                 .accountNumber(accountDto.getAccountNumber())
                 .registeredAt(accountDto.getRegisteredAt())
