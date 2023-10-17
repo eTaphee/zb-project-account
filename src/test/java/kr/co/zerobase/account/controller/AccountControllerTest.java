@@ -1,5 +1,10 @@
 package kr.co.zerobase.account.controller;
 
+import static kr.co.zerobase.account.type.ErrorCode.INVALID_REQUEST;
+import static kr.co.zerobase.account.type.ValidationMessage.INITIAL_BALANCE_MIN_0;
+import static kr.co.zerobase.account.type.ValidationMessage.INITIAL_BALANCE_NOT_NULL;
+import static kr.co.zerobase.account.type.ValidationMessage.USER_ID_MIN_1;
+import static kr.co.zerobase.account.type.ValidationMessage.USER_ID_NOT_NULL;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -16,7 +21,8 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import kr.co.zerobase.account.dto.AccountDto;
-import kr.co.zerobase.account.dto.DeleteAccount.RequestDto;
+import kr.co.zerobase.account.dto.CreateAccount;
+import kr.co.zerobase.account.dto.DeleteAccount;
 import kr.co.zerobase.account.service.AccountService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -55,7 +61,7 @@ class AccountControllerTest {
                 post("/accounts")
                     .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(
-                        kr.co.zerobase.account.dto.CreateAccount.RequestDto.builder()
+                        CreateAccount.RequestDto.builder()
                             .userId(1L)
                             .initialBalance(100L)
                             .build())))
@@ -75,13 +81,13 @@ class AccountControllerTest {
                 post("/accounts")
                     .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(
-                        kr.co.zerobase.account.dto.CreateAccount.RequestDto.builder()
+                        CreateAccount.RequestDto.builder()
                             .initialBalance(100L)
                             .build())))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.status").value(400))
-            .andExpect(jsonPath("$.errorCode").value("INVALID_REQUEST"))
-            .andExpect(jsonPath("$.errorMessage").value("사용자 아이디는 빈 값일 수 없습니다."))
+            .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
+            .andExpect(jsonPath("$.errorMessage").value(USER_ID_NOT_NULL))
             .andDo(print());
     }
 
@@ -95,14 +101,14 @@ class AccountControllerTest {
                 post("/accounts")
                     .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(
-                        kr.co.zerobase.account.dto.CreateAccount.RequestDto.builder()
+                        CreateAccount.RequestDto.builder()
                             .userId(0L)
                             .initialBalance(100L)
                             .build())))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.status").value(400))
-            .andExpect(jsonPath("$.errorCode").value("INVALID_REQUEST"))
-            .andExpect(jsonPath("$.errorMessage").value("사용자 아이디는 1 이상이어야 합니다."))
+            .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
+            .andExpect(jsonPath("$.errorMessage").value(USER_ID_MIN_1))
             .andDo(print());
     }
 
@@ -116,13 +122,13 @@ class AccountControllerTest {
                 post("/accounts")
                     .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(
-                        kr.co.zerobase.account.dto.CreateAccount.RequestDto.builder()
+                        CreateAccount.RequestDto.builder()
                             .userId(1L)
                             .build())))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.status").value(400))
-            .andExpect(jsonPath("$.errorCode").value("INVALID_REQUEST"))
-            .andExpect(jsonPath("$.errorMessage").value("초기 잔액은 빈 값일 수 없습니다."))
+            .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
+            .andExpect(jsonPath("$.errorMessage").value(INITIAL_BALANCE_NOT_NULL))
             .andDo(print());
     }
 
@@ -136,14 +142,14 @@ class AccountControllerTest {
                 post("/accounts")
                     .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(
-                        kr.co.zerobase.account.dto.CreateAccount.RequestDto.builder()
+                        CreateAccount.RequestDto.builder()
                             .userId(1L)
                             .initialBalance(-1L)
                             .build())))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.status").value(400))
-            .andExpect(jsonPath("$.errorCode").value("INVALID_REQUEST"))
-            .andExpect(jsonPath("$.errorMessage").value("초기 잔액은 0 이상이어야 합니다."))
+            .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
+            .andExpect(jsonPath("$.errorMessage").value(INITIAL_BALANCE_MIN_0))
             .andDo(print());
     }
 
@@ -183,13 +189,52 @@ class AccountControllerTest {
                 delete("/accounts/1234567890")
                     .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(
-                        RequestDto.builder()
+                        DeleteAccount.RequestDto.builder()
                             .userId(1L)
                             .build())))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.userId").value(1))
             .andExpect(jsonPath("$.accountNumber").value("1234567890"))
             .andExpect(jsonPath("$.unregisteredAt").isNotEmpty())
+            .andDo(print());
+    }
+
+    @Test
+    @DisplayName("계좌 해지 실패 - 유효성 검사(userId @NotNull)")
+    void failDeleteAccount_userId_NotNull() throws Exception {
+        // given
+        // when
+        // then
+        mockMvc.perform(
+                delete("/accounts/1234567890")
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(
+                        DeleteAccount.RequestDto.builder()
+                            .build())))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
+            .andExpect(jsonPath("$.errorMessage").value(USER_ID_NOT_NULL))
+            .andDo(print());
+    }
+
+    @Test
+    @DisplayName("계좌 해지 실패 - 유효성 검사(userId @Min(1))")
+    void failDeleteAccount_userId_Min_1() throws Exception {
+        // given
+        // when
+        // then
+        mockMvc.perform(
+                delete("/accounts/1234567890")
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(
+                        DeleteAccount.RequestDto.builder()
+                            .userId(0L)
+                            .build())))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
+            .andExpect(jsonPath("$.errorMessage").value(USER_ID_MIN_1))
             .andDo(print());
     }
 

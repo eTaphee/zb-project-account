@@ -51,8 +51,7 @@ public class AccountController {
         return DeleteAccount.ResponseDto.from(
             accountService.deleteAccount(
                 request.getUserId(),
-                accountNumber
-            )
+                accountNumber)
         );
     }
 
