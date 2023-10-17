@@ -7,7 +7,6 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.client.HttpClientErrorException.BadRequest;
 
 @Getter
 @AllArgsConstructor
@@ -17,6 +16,7 @@ public enum ErrorCode {
 
     TRANSACTION_LOCK(HttpStatus.INTERNAL_SERVER_ERROR.value(), null),
     CREATE_ACCOUNT_TRANSACTION_LOCK(HttpStatus.INTERNAL_SERVER_ERROR.value(), "다른 계좌가 생성 중입니다."),
+    MODIFY_ACCOUNT_TRANSACTION_LOCK(HttpStatus.INTERNAL_SERVER_ERROR.value(), "해당 계좌는 사용 중입니다."),
 
     ACCOUNT_NUMBER_ALREADY_EXISTS(HttpStatus.INTERNAL_SERVER_ERROR.value(), "이미 존재하는 계좌번호입니다."),
     USER_NOT_FOUND(NOT_FOUND.value(), "사용자가 없습니다."),
@@ -25,7 +25,8 @@ public enum ErrorCode {
     ACCOUNT_NOT_FOUND(NOT_FOUND.value(), "계좌가 없습니다."),
     USER_ACCOUNT_UN_MATCH(FORBIDDEN.value(), "사용자와 계좌의 소유주가 다릅니다."),
     ACCOUNT_ALREADY_UNREGISTERED(BAD_REQUEST.value(), "계좌가 이미 해지되었습니다."),
-    BALANCE_NOT_EMPTY(BAD_REQUEST.value(), "잔액이 있는 계좌는 해지할 수 없습니다.");
+    BALANCE_NOT_EMPTY(BAD_REQUEST.value(), "잔액이 있는 계좌는 해지할 수 없습니다."),
+    AMOUNT_EXCEED_BALANCE(BAD_REQUEST.value(), "거래 금액이 계좌 잔액보다 큽니다.");
 
     private final int status;
     private final String description;

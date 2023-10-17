@@ -1,5 +1,10 @@
 package kr.co.zerobase.account.dto;
 
+import static kr.co.zerobase.account.type.ValidationMessage.INITIAL_BALANCE_MIN_0;
+import static kr.co.zerobase.account.type.ValidationMessage.INITIAL_BALANCE_NOT_NULL;
+import static kr.co.zerobase.account.type.ValidationMessage.USER_ID_MIN_1;
+import static kr.co.zerobase.account.type.ValidationMessage.USER_ID_NOT_NULL;
+
 import java.time.LocalDateTime;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -14,12 +19,12 @@ public class CreateAccount {
     @Builder
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class RequestDto {
-        @NotNull(message = "사용자 아이디는 빈 값일 수 없습니다.")
-        @Min(value = 1, message = "사용자 아이디는 1 이상이어야 합니다.")
+        @NotNull(message = USER_ID_NOT_NULL)
+        @Min(value = 1, message = USER_ID_MIN_1)
         private final Long userId;
 
-        @NotNull(message = "초기 잔액은 빈 값일 수 없습니다.")
-        @Min(value = 0, message = "초기 잔액은 0 이상이어야 합니다.")
+        @NotNull(message = INITIAL_BALANCE_NOT_NULL)
+        @Min(value = 0, message = INITIAL_BALANCE_MIN_0)
         private final Long initialBalance;
     }
 

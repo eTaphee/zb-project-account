@@ -1,9 +1,7 @@
 package kr.co.zerobase.account.repository;
 
-import java.util.List;
 import java.util.Optional;
 import kr.co.zerobase.account.domain.Account;
-import kr.co.zerobase.account.domain.AccountUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;

@@ -1,6 +1,7 @@
 package kr.co.zerobase.account.domain;
 
-import static kr.co.zerobase.account.type.AccountStatus.*;
+import static kr.co.zerobase.account.type.AccountStatus.UNREGISTERED;
+import static kr.co.zerobase.account.type.ErrorCode.AMOUNT_EXCEED_BALANCE;
 
 import java.time.LocalDateTime;
 import javax.persistence.Column;
@@ -8,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
+import kr.co.zerobase.account.exception.AccountException;
 import kr.co.zerobase.account.type.AccountStatus;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -40,5 +42,13 @@ public class Account extends BaseEntity {
     public void unregister() {
         accountStatus = UNREGISTERED;
         unregisteredAt = LocalDateTime.now();
+    }
+
+    public void useBalance(Long amount) {
+        if (amount > balance) {
+            throw new AccountException(AMOUNT_EXCEED_BALANCE);
+        }
+
+        balance -= amount;
     }
 }

@@ -1,5 +1,8 @@
 package kr.co.zerobase.account.dto;
 
+import static kr.co.zerobase.account.type.ValidationMessage.USER_ID_MIN_1;
+import static kr.co.zerobase.account.type.ValidationMessage.USER_ID_NOT_NULL;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
@@ -15,8 +18,9 @@ public class DeleteAccount {
     @Getter
     @Builder
     public static class RequestDto {
-        @NotNull(message = "사용자 아이디는 빈 값일 수 없습니다.")
-        @Min(value = 1, message = "사용자 아이디는 1 이상이어야 합니다.")
+
+        @NotNull(message = USER_ID_NOT_NULL)
+        @Min(value = 1, message = USER_ID_MIN_1)
         private final Long userId;
 
         @JsonCreator
