@@ -6,6 +6,7 @@ import static kr.co.zerobase.account.type.ErrorCode.ACCOUNT_NOT_FOUND;
 import static kr.co.zerobase.account.type.ErrorCode.AMOUNT_EXCEED_BALANCE;
 import static kr.co.zerobase.account.type.ErrorCode.USER_ACCOUNT_UN_MATCH;
 import static kr.co.zerobase.account.type.ErrorCode.USER_NOT_FOUND;
+import static kr.co.zerobase.account.type.TransactionResultType.F;
 import static kr.co.zerobase.account.type.TransactionResultType.S;
 import static kr.co.zerobase.account.type.TransactionType.USE;
 
@@ -21,6 +22,7 @@ import kr.co.zerobase.account.exception.AccountException;
 import kr.co.zerobase.account.repository.AccountRepository;
 import kr.co.zerobase.account.repository.AccountUserRepository;
 import kr.co.zerobase.account.repository.TransactionRepository;
+import kr.co.zerobase.account.type.ErrorCode;
 import kr.co.zerobase.account.type.TransactionResultType;
 import kr.co.zerobase.account.type.TransactionType;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +48,14 @@ public class TransactionService {
 
         account.useBalance(amount);
 
-        return TransactionDto.fromEntity(saveTransaction(USE, S, account, amount));
+        return TransactionDto.fromEntity(saveTransaction(USE, S, account, amount, null));
+    }
+
+    @Transactional
+    public void saveFailedUseTransaction(String accountNumber, Long amount, ErrorCode errorCode) {
+        Account account = getAccount(accountNumber);
+
+        saveTransaction(USE, F, account, amount, errorCode);
     }
 
     private void validateUseBalance(AccountUser accountUser, Account account, Long amount) {
@@ -64,11 +73,15 @@ public class TransactionService {
     }
 
     private Transaction saveTransaction(TransactionType transactionType,
-        TransactionResultType transactionResultType, Account account, Long amount) {
+        TransactionResultType transactionResultType,
+        Account account,
+        Long amount,
+        ErrorCode errorCode) {
         return transactionRepository.save(
             Transaction.builder()
                 .transactionType(transactionType)
                 .transactionResultType(transactionResultType)
+                .errorCode(errorCode)
                 .account(account)
                 .amount(amount)
                 .balanceSnapshot(account.getBalance())

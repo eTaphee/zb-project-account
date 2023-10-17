@@ -6,6 +6,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
+import kr.co.zerobase.account.type.ErrorCode;
 import kr.co.zerobase.account.type.TransactionResultType;
 import kr.co.zerobase.account.type.TransactionType;
 import lombok.AccessLevel;
@@ -26,6 +27,9 @@ public class Transaction extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private TransactionResultType transactionResultType;
+
+    @Enumerated(EnumType.STRING)
+    private ErrorCode errorCode;
 
     @ManyToOne
     private Account account;

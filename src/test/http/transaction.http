@@ -1,11 +1,11 @@
 ### use balance
-POST http://localhost:8080/transactions
+POST http://localhost:8080/transactions/use
 Content-Type: application/json
 
 {
   "userId": 1,
   "accountNumber": "1000000000",
-  "amount": 100
+  "amount": 100000
 }
 
 ### use balance2
@@ -15,5 +15,5 @@ Content-Type: application/json
 {
   "userId": 1,
   "accountNumber": "1000000000",
-  "amount": 100
+  "amount": 10
 }

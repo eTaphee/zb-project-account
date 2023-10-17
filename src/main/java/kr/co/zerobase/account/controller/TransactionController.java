@@ -3,6 +3,7 @@ package kr.co.zerobase.account.controller;
 import javax.validation.Valid;
 import kr.co.zerobase.account.aop.ModifyAccountLock;
 import kr.co.zerobase.account.dto.UseBalance;
+import kr.co.zerobase.account.exception.AccountException;
 import kr.co.zerobase.account.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,11 +22,21 @@ public class TransactionController {
     @ModifyAccountLock
     public UseBalance.ResponseDto useBalance(
         @RequestBody @Valid UseBalance.RequestDto request) {
-        return UseBalance.ResponseDto.from(
-            transactionService.useBalance(
-                request.getUserId(),
+        try {
+            return UseBalance.ResponseDto.from(
+                transactionService.useBalance(
+                    request.getUserId(),
+                    request.getAccountNumber(),
+                    request.getAmount())
+            );
+        } catch (AccountException e) {
+            transactionService.saveFailedUseTransaction(
                 request.getAccountNumber(),
-                request.getAmount())
-        );
+                request.getAmount(),
+                e.getErrorCode()
+            );
+
+            throw e;
+        }
     }
 }
