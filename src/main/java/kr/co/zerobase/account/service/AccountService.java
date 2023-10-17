@@ -23,6 +23,7 @@ import kr.co.zerobase.account.exception.AccountException;
 import kr.co.zerobase.account.repository.AccountRepository;
 import kr.co.zerobase.account.repository.AccountSpecification;
 import kr.co.zerobase.account.repository.AccountUserRepository;
+import kr.co.zerobase.account.type.AccountStatus;
 import kr.co.zerobase.account.type.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -81,17 +82,24 @@ public class AccountService {
         AccountUser accountUser = getAccountUser(userId);
 
         List<Account> accounts = accountRepository.findAll(
-            getAccountSpecByAccountUserAndAccountStatusEqualsInUse(accountUser));
+            getAccountSpecByAccountUserAndAccountStatus(accountUser, IN_USE));
 
         return accounts.stream().map(AccountDto::fromEntity)
             .collect(Collectors.toList());
     }
 
-    private static Specification<Account> getAccountSpecByAccountUserAndAccountStatusEqualsInUse(
-        AccountUser accountUser) {
+    private static Specification<Account> getAccountSpecByAccountUserAndAccountStatus(
+        AccountUser accountUser,
+        AccountStatus accountStatus) {
         // TODO: 해지 계좌 포함 여부
-        return AccountSpecification.equalAccountUser(accountUser)
-            .and(AccountSpecification.equalAccountStatus(IN_USE));
+
+        Specification<Account> spec = AccountSpecification.equalAccountUser(accountUser);
+
+        if (accountStatus != null) {
+            spec.and(AccountSpecification.equalAccountStatus(accountStatus));
+        }
+
+        return spec;
     }
 
     private String generateAccountNumber() {
@@ -112,7 +120,7 @@ public class AccountService {
     private void validateCreateAccount(AccountUser accountUser) {
         // TODO: 해지 계좌도 카운팅에 포함 여부
         if (accountRepository.count(
-            getAccountSpecByAccountUserAndAccountStatusEqualsInUse(accountUser))
+            getAccountSpecByAccountUserAndAccountStatus(accountUser, IN_USE))
             >= MAX_ACCOUNT_PER_USER) {
             throw new AccountException(ErrorCode.MAX_ACCOUNT_PER_USER);
         }
