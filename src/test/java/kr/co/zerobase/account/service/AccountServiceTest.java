@@ -33,6 +33,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
 
 @ExtendWith(MockitoExtension.class)
 class AccountServiceTest {
@@ -104,8 +105,8 @@ class AccountServiceTest {
         given(accountUserRepository.findById(anyLong()))
             .willReturn(Optional.of(pobi));
 
-        given(accountRepository.countByAccountUser(any()))
-            .willReturn(10);
+        given(accountRepository.count(any(Specification.class)))
+            .willReturn(10L);
 
         // when
         AccountException accountException = assertThrows(AccountException.class,
@@ -255,7 +256,7 @@ class AccountServiceTest {
         given(accountUserRepository.findById(anyLong()))
             .willReturn(Optional.of(pobi));
 
-        given(accountRepository.findAllByAccountUser(any()))
+        given(accountRepository.findAll(any(Specification.class)))
             .willReturn(accounts);
 
         // when

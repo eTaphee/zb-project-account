@@ -21,11 +21,13 @@ import kr.co.zerobase.account.domain.AccountUser;
 import kr.co.zerobase.account.dto.AccountDto;
 import kr.co.zerobase.account.exception.AccountException;
 import kr.co.zerobase.account.repository.AccountRepository;
+import kr.co.zerobase.account.repository.AccountSpecification;
 import kr.co.zerobase.account.repository.AccountUserRepository;
 import kr.co.zerobase.account.type.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -61,22 +63,6 @@ public class AccountService {
         }
     }
 
-
-    private String generateAccountNumber() {
-        StringBuilder buffer = new StringBuilder();
-        Optional<Account> account = null;
-
-        do {
-            buffer.delete(0, buffer.length());
-            for (int i = 0; i < ACCOUNT_NUMBER_LENGTH; i++) {
-                buffer.append(random.nextInt(10));
-            }
-            account = accountRepository.findByAccountNumber(buffer.toString());
-        } while (account.isPresent());
-
-        return buffer.toString();
-    }
-
     @Transactional
     public AccountDto deleteAccount(Long userId, String accountNumber) {
         AccountUser accountUser = getAccountUser(userId);
@@ -94,15 +80,40 @@ public class AccountService {
     public List<AccountDto> getAccountsByUserId(long userId) {
         AccountUser accountUser = getAccountUser(userId);
 
-        List<Account> accounts = accountRepository.findAllByAccountUser(accountUser);
+        List<Account> accounts = accountRepository.findAll(
+            getAccountSpecByAccountUserAndAccountStatusEqualsInUse(accountUser));
 
         return accounts.stream().map(AccountDto::fromEntity)
             .collect(Collectors.toList());
     }
 
+    private static Specification<Account> getAccountSpecByAccountUserAndAccountStatusEqualsInUse(
+        AccountUser accountUser) {
+        // TODO: 해지 계좌 포함 여부
+        return AccountSpecification.equalAccountUser(accountUser)
+            .and(AccountSpecification.equalAccountStatus(IN_USE));
+    }
+
+    private String generateAccountNumber() {
+        StringBuilder buffer = new StringBuilder();
+        Optional<Account> account = null;
+
+        do {
+            buffer.delete(0, buffer.length());
+            for (int i = 0; i < ACCOUNT_NUMBER_LENGTH; i++) {
+                buffer.append(random.nextInt(10));
+            }
+            account = accountRepository.findByAccountNumber(buffer.toString());
+        } while (account.isPresent());
+
+        return buffer.toString();
+    }
+
     private void validateCreateAccount(AccountUser accountUser) {
-        // TODO: 해지 계좌도 카운팅에 포함해야 하는가?
-        if (accountRepository.countByAccountUser(accountUser) >= MAX_ACCOUNT_PER_USER) {
+        // TODO: 해지 계좌도 카운팅에 포함 여부
+        if (accountRepository.count(
+            getAccountSpecByAccountUserAndAccountStatusEqualsInUse(accountUser))
+            >= MAX_ACCOUNT_PER_USER) {
             throw new AccountException(ErrorCode.MAX_ACCOUNT_PER_USER);
         }
     }
