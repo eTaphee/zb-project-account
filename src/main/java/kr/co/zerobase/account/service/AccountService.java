@@ -1,10 +1,16 @@
 package kr.co.zerobase.account.service;
 
 import static kr.co.zerobase.account.type.AccountStatus.IN_USE;
-import static kr.co.zerobase.account.type.ErrorCode.ALREADY_EXIST_ACCOUNT_NUMBER;
+import static kr.co.zerobase.account.type.AccountStatus.UNREGISTERED;
+import static kr.co.zerobase.account.type.ErrorCode.ACCOUNT_ALREADY_UNREGISTERED;
+import static kr.co.zerobase.account.type.ErrorCode.ACCOUNT_NOT_FOUND;
+import static kr.co.zerobase.account.type.ErrorCode.ACCOUNT_NUMBER_ALREADY_EXISTS;
+import static kr.co.zerobase.account.type.ErrorCode.BALANCE_NOT_EMPTY;
+import static kr.co.zerobase.account.type.ErrorCode.USER_ACCOUNT_UN_MATCH;
 import static kr.co.zerobase.account.type.ErrorCode.USER_NOT_FOUND;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import javax.transaction.Transactional;
@@ -34,10 +40,9 @@ public class AccountService {
 
     @Transactional
     public AccountDto createAccount(Long userId, Long initialBalance) {
-        AccountUser accountUser = accountUserRepository.findById(userId)
-            .orElseThrow(() -> new AccountException(USER_NOT_FOUND));
+        AccountUser accountUser = getAccountUser(userId);
 
-        validateAccountUser(accountUser);
+        validateCreateAccount(accountUser);
 
         try {
             return AccountDto.fromEntity(
@@ -50,15 +55,10 @@ public class AccountService {
                     .build()));
         } catch (DataIntegrityViolationException e) {
             // TODO: lock aop로 around시 중복키에 대한 예외가 발생할 수 있을까?
-            throw new AccountException(ALREADY_EXIST_ACCOUNT_NUMBER);
+            throw new AccountException(ACCOUNT_NUMBER_ALREADY_EXISTS);
         }
     }
 
-    private void validateAccountUser(AccountUser accountUser) {
-        if (accountRepository.countByAccountUser(accountUser) >= MAX_ACCOUNT_PER_USER) {
-            throw new AccountException(ErrorCode.MAX_ACCOUNT_PER_USER);
-        }
-    }
 
     private String generateAccountNumber() {
         StringBuilder buffer = new StringBuilder();
@@ -73,5 +73,49 @@ public class AccountService {
         } while (account.isPresent());
 
         return buffer.toString();
+    }
+
+    @Transactional
+    public AccountDto deleteAccount(Long userId, String accountNumber) {
+        AccountUser accountUser = getAccountUser(userId);
+        Account account = getAccount(accountNumber);
+
+        validateDeleteAccount(accountUser, account);
+
+        account.unregister();
+        accountRepository.save(account);
+
+        return AccountDto.fromEntity(account);
+    }
+
+    private void validateCreateAccount(AccountUser accountUser) {
+        // TODO: 해지 계좌도 카운팅에 포함해야 하는가?
+        if (accountRepository.countByAccountUser(accountUser) >= MAX_ACCOUNT_PER_USER) {
+            throw new AccountException(ErrorCode.MAX_ACCOUNT_PER_USER);
+        }
+    }
+
+    private void validateDeleteAccount(AccountUser accountUser, Account account) {
+        if (!Objects.equals(accountUser.getId(), account.getAccountUser().getId())) {
+            throw new AccountException(USER_ACCOUNT_UN_MATCH);
+        }
+
+        if (account.getAccountStatus() == UNREGISTERED) {
+            throw new AccountException(ACCOUNT_ALREADY_UNREGISTERED);
+        }
+
+        if (account.getBalance() > 0) {
+            throw new AccountException(BALANCE_NOT_EMPTY);
+        }
+    }
+
+    private AccountUser getAccountUser(Long userId) {
+        return accountUserRepository.findById(userId)
+            .orElseThrow(() -> new AccountException(USER_NOT_FOUND));
+    }
+
+    private Account getAccount(String accountNumber) {
+        return accountRepository.findByAccountNumber(accountNumber)
+            .orElseThrow(() -> new AccountException(ACCOUNT_NOT_FOUND));
     }
 }

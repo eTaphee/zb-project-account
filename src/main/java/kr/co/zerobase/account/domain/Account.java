@@ -1,5 +1,7 @@
 package kr.co.zerobase.account.domain;
 
+import static kr.co.zerobase.account.type.AccountStatus.*;
+
 import java.time.LocalDateTime;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -34,4 +36,9 @@ public class Account extends BaseEntity {
     private LocalDateTime registeredAt;
 
     private LocalDateTime unregisteredAt;
+
+    public void unregister() {
+        accountStatus = UNREGISTERED;
+        unregisteredAt = LocalDateTime.now();
+    }
 }

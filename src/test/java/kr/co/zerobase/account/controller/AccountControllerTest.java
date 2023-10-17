@@ -1,7 +1,10 @@
 package kr.co.zerobase.account.controller;
 
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -9,16 +12,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import kr.co.zerobase.account.dto.AccountDto;
 import kr.co.zerobase.account.dto.CreateAccount;
+import kr.co.zerobase.account.dto.DeleteAccount;
 import kr.co.zerobase.account.service.AccountService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AccountController.class)
@@ -49,7 +51,7 @@ class AccountControllerTest {
         // then
         mockMvc.perform(
                 post("/accounts")
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(
                         CreateAccount.Request.builder()
                             .userId(1L)
@@ -69,7 +71,7 @@ class AccountControllerTest {
         // then
         mockMvc.perform(
                 post("/accounts")
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(
                         CreateAccount.Request.builder()
                             .initialBalance(100L)
@@ -89,7 +91,7 @@ class AccountControllerTest {
         // then
         mockMvc.perform(
                 post("/accounts")
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(
                         CreateAccount.Request.builder()
                             .userId(0L)
@@ -110,7 +112,7 @@ class AccountControllerTest {
         // then
         mockMvc.perform(
                 post("/accounts")
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(
                         CreateAccount.Request.builder()
                             .userId(1L)
@@ -130,7 +132,7 @@ class AccountControllerTest {
         // then
         mockMvc.perform(
                 post("/accounts")
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(
                         CreateAccount.Request.builder()
                             .userId(1L)
@@ -159,5 +161,33 @@ class AccountControllerTest {
         // given
         // when
         // then
+    }
+
+    @Test
+    @DisplayName("계좌 해지 성공")
+    void successDeleteAccount() throws Exception {
+        // given
+        given(accountService.deleteAccount(anyLong(), anyString()))
+            .willReturn(
+                AccountDto.builder()
+                    .userId(1L)
+                    .accountNumber("1234567890")
+                    .registeredAt(LocalDateTime.now())
+                    .unregisteredAt(LocalDateTime.now())
+                    .build());
+        // when
+        // then
+        mockMvc.perform(
+                delete("/accounts/1234567890")
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(
+                        DeleteAccount.Request.builder()
+                            .userId(1L)
+                            .build())))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.userId").value(1))
+            .andExpect(jsonPath("$.accountNumber").value("1234567890"))
+            .andExpect(jsonPath("$.unregisteredAt").isNotEmpty())
+            .andDo(print());
     }
 }
