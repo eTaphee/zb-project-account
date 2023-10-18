@@ -8,40 +8,39 @@ import static kr.co.zerobase.account.type.ValidationMessage.USER_ID_NOT_NULL;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import kr.co.zerobase.account.dto.AccountDto;
 import kr.co.zerobase.account.dto.CreateAccount;
 import kr.co.zerobase.account.dto.DeleteAccount;
+import kr.co.zerobase.account.dto.DeleteAccount.RequestDto;
 import kr.co.zerobase.account.service.AccountService;
+import kr.co.zerobase.account.util.MockMvcUtil;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
 @WebMvcTest(AccountController.class)
 class AccountControllerTest {
+
+    private static final String CREATE_ACCOUNT_URL = "/accounts";
+    private static final String DELETE_ACCOUNT_URL = "/accounts/1234567890";
+    private static final String GET_ACCOUNT_URL = "/accounts?user_id=1";
 
     @MockBean
     private AccountService accountService;
 
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @Test
     @DisplayName("계좌 생성 성공")
@@ -56,19 +55,18 @@ class AccountControllerTest {
                 .build());
 
         // when
+        CreateAccount.RequestDto request = CreateAccount.RequestDto.builder()
+            .userId(1L)
+            .initialBalance(100L)
+            .build();
+
+        ResultActions resultActions = MockMvcUtil.performPost(mockMvc, CREATE_ACCOUNT_URL, request);
+
         // then
-        mockMvc.perform(
-                post("/accounts")
-                    .contentType(APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(
-                        CreateAccount.RequestDto.builder()
-                            .userId(1L)
-                            .initialBalance(100L)
-                            .build())))
+        resultActions
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.userId").value(1))
-            .andExpect(jsonPath("$.accountNumber").value("1234567890"))
-            .andDo(print());
+            .andExpect(jsonPath("$.accountNumber").value("1234567890"));
     }
 
     @Test
@@ -76,19 +74,18 @@ class AccountControllerTest {
     void failCreateAccount_userId_NotNull() throws Exception {
         // given
         // when
+        CreateAccount.RequestDto request = CreateAccount.RequestDto.builder()
+            .initialBalance(100L)
+            .build();
+
+        ResultActions resultActions = MockMvcUtil.performPost(mockMvc, CREATE_ACCOUNT_URL, request);
+
         // then
-        mockMvc.perform(
-                post("/accounts")
-                    .contentType(APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(
-                        CreateAccount.RequestDto.builder()
-                            .initialBalance(100L)
-                            .build())))
+        resultActions
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
-            .andExpect(jsonPath("$.errorMessage").value(USER_ID_NOT_NULL))
-            .andDo(print());
+            .andExpect(jsonPath("$.errorMessage").value(USER_ID_NOT_NULL));
     }
 
     @Test
@@ -96,20 +93,19 @@ class AccountControllerTest {
     void failCreateAccount_userId_Min_1() throws Exception {
         // given
         // when
+        CreateAccount.RequestDto request = CreateAccount.RequestDto.builder()
+            .userId(0L)
+            .initialBalance(100L)
+            .build();
+
+        ResultActions resultActions = MockMvcUtil.performPost(mockMvc, CREATE_ACCOUNT_URL, request);
+
         // then
-        mockMvc.perform(
-                post("/accounts")
-                    .contentType(APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(
-                        CreateAccount.RequestDto.builder()
-                            .userId(0L)
-                            .initialBalance(100L)
-                            .build())))
+        resultActions
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
-            .andExpect(jsonPath("$.errorMessage").value(USER_ID_MIN_1))
-            .andDo(print());
+            .andExpect(jsonPath("$.errorMessage").value(USER_ID_MIN_1));
     }
 
     @Test
@@ -117,19 +113,16 @@ class AccountControllerTest {
     void failCreateAccount_initialBalance_NotNull() throws Exception {
         // given
         // when
+        CreateAccount.RequestDto request = CreateAccount.RequestDto.builder().userId(1L).build();
+
+        ResultActions resultActions = MockMvcUtil.performPost(mockMvc, CREATE_ACCOUNT_URL, request);
+
         // then
-        mockMvc.perform(
-                post("/accounts")
-                    .contentType(APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(
-                        CreateAccount.RequestDto.builder()
-                            .userId(1L)
-                            .build())))
+        resultActions
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
-            .andExpect(jsonPath("$.errorMessage").value(INITIAL_BALANCE_NOT_NULL))
-            .andDo(print());
+            .andExpect(jsonPath("$.errorMessage").value(INITIAL_BALANCE_NOT_NULL));
     }
 
     @Test
@@ -137,22 +130,22 @@ class AccountControllerTest {
     void failCreateAccount_initialBalance_Min_1() throws Exception {
         // given
         // when
+        CreateAccount.RequestDto request = CreateAccount.RequestDto.builder()
+            .userId(1L)
+            .initialBalance(-1L)
+            .build();
+
+        ResultActions resultActions = MockMvcUtil.performPost(mockMvc, CREATE_ACCOUNT_URL, request);
+
         // then
-        mockMvc.perform(
-                post("/accounts")
-                    .contentType(APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(
-                        CreateAccount.RequestDto.builder()
-                            .userId(1L)
-                            .initialBalance(-1L)
-                            .build())))
+        resultActions
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
-            .andExpect(jsonPath("$.errorMessage").value(INITIAL_BALANCE_MIN_0))
-            .andDo(print());
+            .andExpect(jsonPath("$.errorMessage").value(INITIAL_BALANCE_MIN_0));
     }
 
+    @Disabled
     @Test
     @DisplayName("계좌 생성 실패 - 사용자 없음")
     void failCreateAccount_UserNotFound() throws Exception {
@@ -162,6 +155,7 @@ class AccountControllerTest {
         // then
     }
 
+    @Disabled
     @Test
     @DisplayName("계좌 생성 실패 - 사용자당 생성 개수 초과")
     void failCreateAccount_MaxAccountPerUser() {
@@ -183,20 +177,20 @@ class AccountControllerTest {
                     .registeredAt(LocalDateTime.now())
                     .unregisteredAt(LocalDateTime.now())
                     .build());
+
         // when
+        RequestDto request = RequestDto.builder().userId(1L).build();
+
+        ResultActions resultActions = MockMvcUtil.performDelete(mockMvc,
+            DELETE_ACCOUNT_URL,
+            request);
+
         // then
-        mockMvc.perform(
-                delete("/accounts/1234567890")
-                    .contentType(APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(
-                        DeleteAccount.RequestDto.builder()
-                            .userId(1L)
-                            .build())))
+        resultActions
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.userId").value(1))
             .andExpect(jsonPath("$.accountNumber").value("1234567890"))
-            .andExpect(jsonPath("$.unregisteredAt").isNotEmpty())
-            .andDo(print());
+            .andExpect(jsonPath("$.unregisteredAt").isNotEmpty());
     }
 
     @Test
@@ -204,18 +198,16 @@ class AccountControllerTest {
     void failDeleteAccount_userId_NotNull() throws Exception {
         // given
         // when
+        ResultActions resultActions = MockMvcUtil.performDelete(mockMvc,
+            DELETE_ACCOUNT_URL,
+            DeleteAccount.RequestDto.builder().build());
+
         // then
-        mockMvc.perform(
-                delete("/accounts/1234567890")
-                    .contentType(APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(
-                        DeleteAccount.RequestDto.builder()
-                            .build())))
+        resultActions
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
-            .andExpect(jsonPath("$.errorMessage").value(USER_ID_NOT_NULL))
-            .andDo(print());
+            .andExpect(jsonPath("$.errorMessage").value(USER_ID_NOT_NULL));
     }
 
     @Test
@@ -223,19 +215,18 @@ class AccountControllerTest {
     void failDeleteAccount_userId_Min_1() throws Exception {
         // given
         // when
+        RequestDto request = RequestDto.builder().userId(0L).build();
+
+        ResultActions resultActions = MockMvcUtil.performDelete(mockMvc,
+            DELETE_ACCOUNT_URL,
+            request);
+
         // then
-        mockMvc.perform(
-                delete("/accounts/1234567890")
-                    .contentType(APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(
-                        DeleteAccount.RequestDto.builder()
-                            .userId(0L)
-                            .build())))
+        resultActions
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
-            .andExpect(jsonPath("$.errorMessage").value(USER_ID_MIN_1))
-            .andDo(print());
+            .andExpect(jsonPath("$.errorMessage").value(USER_ID_MIN_1));
     }
 
     @Test
@@ -252,17 +243,16 @@ class AccountControllerTest {
             .willReturn(accounts);
 
         // when
+        ResultActions resultActions = MockMvcUtil.performGet(mockMvc, GET_ACCOUNT_URL);
+
         // then
-        mockMvc.perform(
-                get("/accounts?user_id=1")
-                    .contentType(APPLICATION_JSON))
+        resultActions
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].accountNumber").value("1000000000"))
             .andExpect(jsonPath("$[0].balance").value(0))
             .andExpect(jsonPath("$[1].accountNumber").value("2000000000"))
             .andExpect(jsonPath("$[1].balance").value(100))
             .andExpect(jsonPath("$[2].accountNumber").value("3000000000"))
-            .andExpect(jsonPath("$[2].balance").value(2000))
-            .andDo(print());
+            .andExpect(jsonPath("$[2].balance").value(2000));
     }
 }
