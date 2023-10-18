@@ -3,10 +3,12 @@ package kr.co.zerobase.account.controller;
 import javax.validation.Valid;
 import kr.co.zerobase.account.aop.ModifyAccountLock;
 import kr.co.zerobase.account.dto.CancelBalance;
+import kr.co.zerobase.account.dto.GetTransaction;
 import kr.co.zerobase.account.dto.UseBalance;
 import kr.co.zerobase.account.exception.AccountException;
 import kr.co.zerobase.account.service.TransactionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,7 +22,7 @@ public class TransactionController {
 
     private final TransactionService transactionService;
 
-    @PostMapping("/use")
+    @PostMapping("use")
     @ModifyAccountLock
     public UseBalance.ResponseDto useBalance(
         @RequestBody @Valid UseBalance.RequestDto request) {
@@ -63,5 +65,10 @@ public class TransactionController {
 
             throw e;
         }
+    }
+
+    @GetMapping("{transactionId}")
+    public GetTransaction.ResponseDto getTransaction(@PathVariable String transactionId) {
+        return GetTransaction.ResponseDto.from(transactionService.queryTransaction(transactionId));
     }
 }

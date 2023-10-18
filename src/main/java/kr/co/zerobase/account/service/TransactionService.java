@@ -68,6 +68,11 @@ public class TransactionService {
     }
 
     @Transactional
+    public TransactionDto queryTransaction(String transactionId) {
+        return TransactionDto.fromEntity(getTransaction(transactionId));
+    }
+
+    @Transactional
     public void saveFailedUseTransaction(String accountNumber, Long amount, ErrorCode errorCode) {
         Account account = getAccount(accountNumber);
 

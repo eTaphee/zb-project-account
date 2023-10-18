@@ -2,6 +2,7 @@ package kr.co.zerobase.account.controller;
 
 import static kr.co.zerobase.account.type.ErrorCode.INVALID_REQUEST;
 import static kr.co.zerobase.account.type.TransactionResultType.S;
+import static kr.co.zerobase.account.type.TransactionType.USE;
 import static kr.co.zerobase.account.type.ValidationMessage.ACCOUNT_NUMBER_NOT_NULL;
 import static kr.co.zerobase.account.type.ValidationMessage.ACCOUNT_NUMBER_SIZE_10;
 import static kr.co.zerobase.account.type.ValidationMessage.CANCEL_BALANCE_AMOUNT_MAX_1_000_000_000;
@@ -20,6 +21,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -400,5 +402,30 @@ class TransactionControllerTest {
             .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
             .andExpect(jsonPath("$.errorMessage").value(CANCEL_BALANCE_AMOUNT_MAX_1_000_000_000))
             .andDo(print());
+    }
+
+    @Test
+    @DisplayName("거래 조회 성공")
+    void successGetTransaction() throws Exception {
+        // given
+        given(transactionService.queryTransaction(anyString()))
+            .willReturn(TransactionDto.builder()
+                .accountNumber("100000000")
+                .transactionType(USE)
+                .transactedAt(LocalDateTime.now())
+                .amount(54321L)
+                .transactionId("transactionId")
+                .transactionResultType(S)
+                .build());
+
+        // when
+        // then
+        mockMvc.perform(get("/transactions/12345"))
+            .andDo(print())
+            .andExpect(jsonPath("$.accountNumber").value("100000000"))
+            .andExpect(jsonPath("$.transactionType").value("USE"))
+            .andExpect(jsonPath("$.transactionResult").value("S"))
+            .andExpect(jsonPath("$.amount").value(54321))
+            .andExpect(jsonPath("$.transactionId").value("transactionId"));
     }
 }
