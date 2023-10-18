@@ -5,9 +5,12 @@ import static kr.co.zerobase.account.type.AccountStatus.UNREGISTERED;
 import static kr.co.zerobase.account.type.ErrorCode.ACCOUNT_ALREADY_UNREGISTERED;
 import static kr.co.zerobase.account.type.ErrorCode.ACCOUNT_NOT_FOUND;
 import static kr.co.zerobase.account.type.ErrorCode.AMOUNT_EXCEED_BALANCE;
+import static kr.co.zerobase.account.type.ErrorCode.CANCEL_BALANCE_MUST_SUCCESS_TRANSACTION;
+import static kr.co.zerobase.account.type.ErrorCode.CANCEL_BALANCE_MUST_USE_TRANSACTION;
 import static kr.co.zerobase.account.type.ErrorCode.CANCEL_MUST_FULLY;
 import static kr.co.zerobase.account.type.ErrorCode.INVALID_REQUEST;
 import static kr.co.zerobase.account.type.ErrorCode.TRANSACTION_ACCOUNT_UN_MATCH;
+import static kr.co.zerobase.account.type.ErrorCode.TRANSACTION_ALREADY_CANCELED;
 import static kr.co.zerobase.account.type.ErrorCode.TRANSACTION_NOT_FOUND;
 import static kr.co.zerobase.account.type.ErrorCode.USER_ACCOUNT_UN_MATCH;
 import static kr.co.zerobase.account.type.ErrorCode.USER_NOT_FOUND;
@@ -234,7 +237,7 @@ class TransactionServiceTest {
         ArgumentCaptor<Transaction> captor = ArgumentCaptor.forClass(Transaction.class);
 
         // when
-        transactionService.saveFailedUseTransaction("100000000",
+        transactionService.saveFailedUseTransaction(USE, "100000000",
             2000L, INVALID_REQUEST);
 
         // then
@@ -410,6 +413,99 @@ class TransactionServiceTest {
 
         // then
         assertEquals(CANCEL_MUST_FULLY, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("거래 취소 실패 - 이미 취소된 거래")
+    void failCancelBalance_TransactionAlreadyCanceled() {
+        // given
+        Account account = Account.builder()
+            .id(1L)
+            .accountUser(pobi)
+            .accountStatus(IN_USE)
+            .balance(1000L)
+            .accountNumber("1000000000")
+            .build();
+
+        Transaction transaction = Transaction.builder()
+            .account(account)
+            .isCanceled(true)
+            .build();
+
+        given(accountRepository.findByAccountNumber(anyString()))
+            .willReturn(Optional.of(account));
+
+        given(transactionRepository.findByTransactionId(anyString()))
+            .willReturn(Optional.of(transaction));
+
+        // when
+        AccountException exception = assertThrows(AccountException.class,
+            () -> transactionService.cancelBalance("transactionId", "1000000012", 300L));
+
+        // then
+        assertEquals(TRANSACTION_ALREADY_CANCELED, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("거래 취소 실패 - 취소된 거래 취소")
+    void failCancelBalance_CancelBalanceMustUseTransaction() {
+        // given
+        Account account = Account.builder()
+            .id(1L)
+            .accountUser(pobi)
+            .accountStatus(IN_USE)
+            .balance(1000L)
+            .accountNumber("1000000000")
+            .build();
+
+        Transaction transaction = Transaction.builder()
+            .account(account)
+            .transactionType(CANCEL)
+            .build();
+
+        given(accountRepository.findByAccountNumber(anyString()))
+            .willReturn(Optional.of(account));
+
+        given(transactionRepository.findByTransactionId(anyString()))
+            .willReturn(Optional.of(transaction));
+
+        // when
+        AccountException exception = assertThrows(AccountException.class,
+            () -> transactionService.cancelBalance("transactionId", "1000000012", 300L));
+
+        // then
+        assertEquals(CANCEL_BALANCE_MUST_USE_TRANSACTION, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("거래 취소 실패 - 실패한 거래 취소")
+    void failCancelBalance_CancelBalanceMustSuccessTransaction() {
+        // given
+        Account account = Account.builder()
+            .id(1L)
+            .accountUser(pobi)
+            .accountStatus(IN_USE)
+            .balance(1000L)
+            .accountNumber("1000000000")
+            .build();
+
+        Transaction transaction = Transaction.builder()
+            .account(account)
+            .transactionResultType(F)
+            .build();
+
+        given(accountRepository.findByAccountNumber(anyString()))
+            .willReturn(Optional.of(account));
+
+        given(transactionRepository.findByTransactionId(anyString()))
+            .willReturn(Optional.of(transaction));
+
+        // when
+        AccountException exception = assertThrows(AccountException.class,
+            () -> transactionService.cancelBalance("transactionId", "1000000012", 300L));
+
+        // then
+        assertEquals(CANCEL_BALANCE_MUST_SUCCESS_TRANSACTION, exception.getErrorCode());
     }
 
     @Test

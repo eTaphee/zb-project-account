@@ -29,7 +29,10 @@ public enum ErrorCode {
 
     TRANSACTION_NOT_FOUND(NOT_FOUND.value(), "해당 거래가 없습니다."),
     TRANSACTION_ACCOUNT_UN_MATCH(BAD_REQUEST.value(), "이 거래는 해당 계좌에서 발생한 거래가 아닙니다."),
-    CANCEL_MUST_FULLY(BAD_REQUEST.value(), "거래 부분 취소는 허용되지 않습니다");
+    CANCEL_MUST_FULLY(BAD_REQUEST.value(), "거래 부분 취소는 허용되지 않습니다"),
+    CANCEL_BALANCE_MUST_USE_TRANSACTION(BAD_REQUEST.value(), "취소된 거래는 취소할 수 없습니다."),
+    CANCEL_BALANCE_MUST_SUCCESS_TRANSACTION(BAD_REQUEST.value(), "실패 거래 내역은 취소할 수 없습니다."),
+    TRANSACTION_ALREADY_CANCELED(BAD_REQUEST.value(), "이미 취소된 거래입니다.");
 
     private final int status;
     private final String description;

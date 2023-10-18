@@ -4,8 +4,11 @@ import static kr.co.zerobase.account.type.AccountStatus.UNREGISTERED;
 import static kr.co.zerobase.account.type.ErrorCode.ACCOUNT_ALREADY_UNREGISTERED;
 import static kr.co.zerobase.account.type.ErrorCode.ACCOUNT_NOT_FOUND;
 import static kr.co.zerobase.account.type.ErrorCode.AMOUNT_EXCEED_BALANCE;
+import static kr.co.zerobase.account.type.ErrorCode.CANCEL_BALANCE_MUST_SUCCESS_TRANSACTION;
+import static kr.co.zerobase.account.type.ErrorCode.CANCEL_BALANCE_MUST_USE_TRANSACTION;
 import static kr.co.zerobase.account.type.ErrorCode.CANCEL_MUST_FULLY;
 import static kr.co.zerobase.account.type.ErrorCode.TRANSACTION_ACCOUNT_UN_MATCH;
+import static kr.co.zerobase.account.type.ErrorCode.TRANSACTION_ALREADY_CANCELED;
 import static kr.co.zerobase.account.type.ErrorCode.TRANSACTION_NOT_FOUND;
 import static kr.co.zerobase.account.type.ErrorCode.USER_ACCOUNT_UN_MATCH;
 import static kr.co.zerobase.account.type.ErrorCode.USER_NOT_FOUND;
@@ -52,7 +55,8 @@ public class TransactionService {
 
         account.useBalance(amount);
 
-        return TransactionDto.fromEntity(saveTransaction(USE, S, account, amount, null));
+        return TransactionDto.fromEntity(
+            saveTransaction(USE, S, account, amount, false, null, null));
     }
 
     @Transactional
@@ -63,8 +67,10 @@ public class TransactionService {
         validateCancelBalance(transaction, account, amount);
 
         account.cancelBalance(amount);
+        transaction.cancel();
 
-        return TransactionDto.fromEntity(saveTransaction(CANCEL, S, account, amount, null));
+        return TransactionDto.fromEntity(
+            saveTransaction(CANCEL, S, account, amount, false, transaction, null));
     }
 
     @Transactional
@@ -73,10 +79,10 @@ public class TransactionService {
     }
 
     @Transactional
-    public void saveFailedUseTransaction(String accountNumber, Long amount, ErrorCode errorCode) {
+    public void saveFailedUseTransaction(TransactionType transactionType, String accountNumber, Long amount, ErrorCode errorCode) {
         Account account = getAccount(accountNumber);
 
-        saveTransaction(USE, F, account, amount, errorCode);
+        saveTransaction(transactionType, F, account, amount, false, null, errorCode);
     }
 
     private void validateUseBalance(AccountUser accountUser, Account account, Long amount) {
@@ -99,6 +105,18 @@ public class TransactionService {
             throw new AccountException(TRANSACTION_ACCOUNT_UN_MATCH);
         }
 
+        if (transaction.isCanceled()) {
+            throw new AccountException(TRANSACTION_ALREADY_CANCELED);
+        }
+
+        if (Objects.equals(transaction.getTransactionType(), CANCEL)) {
+            throw new AccountException(CANCEL_BALANCE_MUST_USE_TRANSACTION);
+        }
+
+        if (Objects.equals(transaction.getTransactionResultType(), F)) {
+            throw new AccountException(CANCEL_BALANCE_MUST_SUCCESS_TRANSACTION);
+        }
+
         if (!Objects.equals(transaction.getAmount(), amount)) {
             throw new AccountException(CANCEL_MUST_FULLY);
         }
@@ -113,17 +131,21 @@ public class TransactionService {
         TransactionResultType transactionResultType,
         Account account,
         Long amount,
+        boolean isCanceled,
+        Transaction transactionForCancel,
         ErrorCode errorCode) {
         return transactionRepository.save(
             Transaction.builder()
                 .transactionType(transactionType)
                 .transactionResultType(transactionResultType)
-                .errorCode(errorCode)
                 .account(account)
                 .amount(amount)
                 .balanceSnapshot(account.getBalance())
                 .transactionId(UUID.randomUUID().toString().replace("-", ""))
+                .isCanceled(isCanceled)
+                .transactionForCancel(transactionForCancel)
                 .transactedAt(LocalDateTime.now())
+                .errorCode(errorCode)
                 .build());
     }
 

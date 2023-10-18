@@ -35,6 +35,7 @@ import kr.co.zerobase.account.dto.UseBalance;
 import kr.co.zerobase.account.exception.AccountException;
 import kr.co.zerobase.account.service.TransactionService;
 import kr.co.zerobase.account.type.ErrorCode;
+import kr.co.zerobase.account.type.TransactionType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -97,6 +98,8 @@ class TransactionControllerTest {
         assertThrows(AccountException.class,
             () -> transactionService.useBalance(1L, "1234567890", 1000L));
 
+        ArgumentCaptor<TransactionType> transactionTypeCaptor = ArgumentCaptor.forClass(
+            TransactionType.class);
         ArgumentCaptor<String> accountNumberCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Long> amountCaptor = ArgumentCaptor.forClass(Long.class);
         ArgumentCaptor<ErrorCode> errorCodeCaptor = ArgumentCaptor.forClass(ErrorCode.class);
@@ -112,6 +115,7 @@ class TransactionControllerTest {
                     .build())));
 
         verify(transactionService, times(1)).saveFailedUseTransaction(
+            transactionTypeCaptor.capture(),
             accountNumberCaptor.capture(),
             amountCaptor.capture(),
             errorCodeCaptor.capture());

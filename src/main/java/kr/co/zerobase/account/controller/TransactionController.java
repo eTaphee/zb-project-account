@@ -1,5 +1,8 @@
 package kr.co.zerobase.account.controller;
 
+import static kr.co.zerobase.account.type.TransactionType.CANCEL;
+import static kr.co.zerobase.account.type.TransactionType.USE;
+
 import javax.validation.Valid;
 import kr.co.zerobase.account.aop.ModifyAccountLock;
 import kr.co.zerobase.account.dto.CancelBalance;
@@ -35,6 +38,7 @@ public class TransactionController {
             );
         } catch (AccountException e) {
             transactionService.saveFailedUseTransaction(
+                USE,
                 request.getAccountNumber(),
                 request.getAmount(),
                 e.getErrorCode()
@@ -58,6 +62,7 @@ public class TransactionController {
             );
         } catch (AccountException e) {
             transactionService.saveFailedUseTransaction(
+                CANCEL,
                 request.getAccountNumber(),
                 request.getAmount(),
                 e.getErrorCode()
