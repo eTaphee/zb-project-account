@@ -14,4 +14,8 @@ public final class ValidationMessage {
     public static final String USE_BALANCE_AMOUNT_NOT_NULL = "잔액 사용 금액은 빈 값일 수 없습니다.";
     public static final String USE_BALANCE_AMOUNT_MIN_10 = "최소 잔액 사용 금액은 10원입니다.";
     public static final String USE_BALANCE_AMOUNT_MAX_1_000_000_000 = "최대 잔액 사용 금액은 1,000,000,000원입니다.";
+
+    public static final String CANCEL_BALANCE_AMOUNT_NOT_NULL = "거래 취소 금액은 빈 값일 수 없습니다.";
+    public static final String CANCEL_BALANCE_AMOUNT_MIN_10 = "최소 거래 취소 금액은 10원입니다.";
+    public static final String CANCEL_BALANCE_AMOUNT_MAX_1_000_000_000 = "최대 거래 취소 금액은 1,000,000,000원입니다.";
 }

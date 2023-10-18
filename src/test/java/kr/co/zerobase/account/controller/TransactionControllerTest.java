@@ -4,6 +4,9 @@ import static kr.co.zerobase.account.type.ErrorCode.INVALID_REQUEST;
 import static kr.co.zerobase.account.type.TransactionResultType.S;
 import static kr.co.zerobase.account.type.ValidationMessage.ACCOUNT_NUMBER_NOT_NULL;
 import static kr.co.zerobase.account.type.ValidationMessage.ACCOUNT_NUMBER_SIZE_10;
+import static kr.co.zerobase.account.type.ValidationMessage.CANCEL_BALANCE_AMOUNT_MAX_1_000_000_000;
+import static kr.co.zerobase.account.type.ValidationMessage.CANCEL_BALANCE_AMOUNT_MIN_10;
+import static kr.co.zerobase.account.type.ValidationMessage.CANCEL_BALANCE_AMOUNT_NOT_NULL;
 import static kr.co.zerobase.account.type.ValidationMessage.USER_ID_MIN_1;
 import static kr.co.zerobase.account.type.ValidationMessage.USER_ID_NOT_NULL;
 import static kr.co.zerobase.account.type.ValidationMessage.USE_BALANCE_AMOUNT_MAX_1_000_000_000;
@@ -24,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
+import kr.co.zerobase.account.dto.CancelBalance;
 import kr.co.zerobase.account.dto.TransactionDto;
 import kr.co.zerobase.account.dto.UseBalance;
 import kr.co.zerobase.account.exception.AccountException;
@@ -262,6 +266,139 @@ class TransactionControllerTest {
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
             .andExpect(jsonPath("$.errorMessage").value(USE_BALANCE_AMOUNT_MAX_1_000_000_000))
+            .andDo(print());
+    }
+
+    @Test
+    @DisplayName("거래 취소 성공")
+    void successCancelBalance() throws Exception {
+        // given
+        given(transactionService.cancelBalance(anyString(), anyString(), anyLong()))
+            .willReturn(TransactionDto.builder()
+                .accountNumber("1000000000")
+                .transactedAt(LocalDateTime.now())
+                .amount(1000L)
+                .transactionId("canceledTransactionId")
+                .transactionResultType(S)
+                .build());
+
+        // when
+        // then
+        mockMvc.perform(post("/transactions/transactionIdForCancel/cancel")
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    CancelBalance.RequestDto.builder()
+                        .accountNumber("1000000000")
+                        .amount(1000L)
+                        .build())))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.accountNumber").value("1000000000"))
+            .andExpect(jsonPath("$.transactionResult").value("S"))
+            .andExpect(jsonPath("$.transactionId").value("canceledTransactionId"))
+            .andExpect(jsonPath("$.amount").value(1000L))
+            .andDo(print());
+    }
+
+    @Test
+    @DisplayName("거래 취소 실패 - 유효성 검사(accountNumber @NotNull)")
+    void failCancelBalance_accountNumber_NotNull() throws Exception {
+        // given
+        // when
+        // then
+        mockMvc.perform(
+                post("/transactions/transactionIdForCancel/cancel")
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(
+                        CancelBalance.RequestDto.builder()
+                            .amount(100L)
+                            .build())))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
+            .andExpect(jsonPath("$.errorMessage").value(ACCOUNT_NUMBER_NOT_NULL))
+            .andDo(print());
+    }
+
+    @Test
+    @DisplayName("거래 취소 실패 - 유효성 검사(accountNumber @Size(10))")
+    void failCancelBalance_accountNumber_Size_10() throws Exception {
+        // given
+        // when
+        // then
+        mockMvc.perform(
+                post("/transactions/transactionIdForCancel/cancel")
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(
+                        CancelBalance.RequestDto.builder()
+                            .accountNumber("123456789")
+                            .amount(100L)
+                            .build())))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
+            .andExpect(jsonPath("$.errorMessage").value(ACCOUNT_NUMBER_SIZE_10))
+            .andDo(print());
+    }
+
+    @Test
+    @DisplayName("거래 취소 실패 - 유효성 검사(amount @NotNull)")
+    void failCancelBalance_amount_NotNull() throws Exception {
+        // given
+        // when
+        // then
+        mockMvc.perform(
+                post("/transactions/transactionIdForCancel/cancel")
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(
+                        CancelBalance.RequestDto.builder()
+                            .accountNumber("1234567890")
+                            .build())))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
+            .andExpect(jsonPath("$.errorMessage").value(CANCEL_BALANCE_AMOUNT_NOT_NULL))
+            .andDo(print());
+    }
+
+    @Test
+    @DisplayName("거래 취소 실패 - 유효성 검사(amount @Min(10))")
+    void failCancelBalance_amount_Min_10() throws Exception {
+        // given
+        // when
+        // then
+        mockMvc.perform(
+                post("/transactions/transactionIdForCancel/cancel")
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(
+                        CancelBalance.RequestDto.builder()
+                            .accountNumber("1234567890")
+                            .amount(9L)
+                            .build())))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
+            .andExpect(jsonPath("$.errorMessage").value(CANCEL_BALANCE_AMOUNT_MIN_10))
+            .andDo(print());
+    }
+
+    @Test
+    @DisplayName("거래 취소 실패 - 유효성 검사(amount @Max(1_000_000_000))")
+    void failCancelBalance_amount_Max_1_000_000_000() throws Exception {
+        // given
+        // when
+        // then
+        mockMvc.perform(
+                post("/transactions/transactionIdForCancel/cancel")
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(
+                        CancelBalance.RequestDto.builder()
+                            .accountNumber("1234567890")
+                            .amount(1_000_000_000L + 1L)
+                            .build())))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.errorCode").value(INVALID_REQUEST.toString()))
+            .andExpect(jsonPath("$.errorMessage").value(CANCEL_BALANCE_AMOUNT_MAX_1_000_000_000))
             .andDo(print());
     }
 }

@@ -2,6 +2,7 @@ package kr.co.zerobase.account.domain;
 
 import static kr.co.zerobase.account.type.AccountStatus.UNREGISTERED;
 import static kr.co.zerobase.account.type.ErrorCode.AMOUNT_EXCEED_BALANCE;
+import static kr.co.zerobase.account.type.ErrorCode.INVALID_REQUEST;
 
 import java.time.LocalDateTime;
 import javax.persistence.Column;
@@ -50,5 +51,13 @@ public class Account extends BaseEntity {
         }
 
         balance -= amount;
+    }
+
+    public void cancelBalance(Long amount) {
+        if (amount < 0) {
+            throw new AccountException(INVALID_REQUEST);
+        }
+
+        balance += amount;
     }
 }

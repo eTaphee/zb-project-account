@@ -4,10 +4,14 @@ import static kr.co.zerobase.account.type.AccountStatus.UNREGISTERED;
 import static kr.co.zerobase.account.type.ErrorCode.ACCOUNT_ALREADY_UNREGISTERED;
 import static kr.co.zerobase.account.type.ErrorCode.ACCOUNT_NOT_FOUND;
 import static kr.co.zerobase.account.type.ErrorCode.AMOUNT_EXCEED_BALANCE;
+import static kr.co.zerobase.account.type.ErrorCode.CANCEL_MUST_FULLY;
+import static kr.co.zerobase.account.type.ErrorCode.TRANSACTION_ACCOUNT_UN_MATCH;
+import static kr.co.zerobase.account.type.ErrorCode.TRANSACTION_NOT_FOUND;
 import static kr.co.zerobase.account.type.ErrorCode.USER_ACCOUNT_UN_MATCH;
 import static kr.co.zerobase.account.type.ErrorCode.USER_NOT_FOUND;
 import static kr.co.zerobase.account.type.TransactionResultType.F;
 import static kr.co.zerobase.account.type.TransactionResultType.S;
+import static kr.co.zerobase.account.type.TransactionType.CANCEL;
 import static kr.co.zerobase.account.type.TransactionType.USE;
 
 import java.time.LocalDateTime;
@@ -52,6 +56,18 @@ public class TransactionService {
     }
 
     @Transactional
+    public TransactionDto cancelBalance(String transactionId, String accountNumber, Long amount) {
+        Transaction transaction = getTransaction(transactionId);
+        Account account = getAccount(accountNumber);
+
+        validateCancelBalance(transaction, account, amount);
+
+        account.cancelBalance(amount);
+
+        return TransactionDto.fromEntity(saveTransaction(CANCEL, S, account, amount, null));
+    }
+
+    @Transactional
     public void saveFailedUseTransaction(String accountNumber, Long amount, ErrorCode errorCode) {
         Account account = getAccount(accountNumber);
 
@@ -70,6 +86,22 @@ public class TransactionService {
         if (amount > account.getBalance()) {
             throw new AccountException(AMOUNT_EXCEED_BALANCE);
         }
+    }
+
+    private void validateCancelBalance(Transaction transaction, Account account, Long amount) {
+        if (!Objects.equals(transaction.getAccount().getAccountNumber(),
+            account.getAccountNumber())) {
+            throw new AccountException(TRANSACTION_ACCOUNT_UN_MATCH);
+        }
+
+        if (!Objects.equals(transaction.getAmount(), amount)) {
+            throw new AccountException(CANCEL_MUST_FULLY);
+        }
+
+        // 과제 조건 명시 X
+//        if (transaction.getTransactedAt().isBefore(LocalDateTime.now().minusYears(1))) {
+//            throw new AccountException(TOO_OLD_ORDER_TO_CANCEL);
+//        }
     }
 
     private Transaction saveTransaction(TransactionType transactionType,
@@ -98,5 +130,10 @@ public class TransactionService {
     private Account getAccount(String accountNumber) {
         return accountRepository.findByAccountNumber(accountNumber)
             .orElseThrow(() -> new AccountException(ACCOUNT_NOT_FOUND));
+    }
+
+    private Transaction getTransaction(String transactionId) {
+        return transactionRepository.findByTransactionId(transactionId)
+            .orElseThrow(() -> new AccountException(TRANSACTION_NOT_FOUND));
     }
 }
