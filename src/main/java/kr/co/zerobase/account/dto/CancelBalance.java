@@ -11,6 +11,7 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import kr.co.zerobase.account.aop.ModifyAccountRequest;
 import kr.co.zerobase.account.type.TransactionResultType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -22,7 +23,7 @@ public class CancelBalance {
     @Getter
     @Builder
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
-    public static class RequestDto {
+    public static class RequestDto implements ModifyAccountRequest {
 
         @NotNull(message = ACCOUNT_NUMBER_NOT_NULL)
         @Size(min = 10, max = 10, message = ACCOUNT_NUMBER_SIZE_10)
