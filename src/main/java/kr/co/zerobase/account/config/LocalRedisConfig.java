@@ -21,6 +21,7 @@ public class LocalRedisConfig {
         redisServer = new RedisServer(redisPort);
         try {
             redisServer.start();
+            log.info("embedded redis started!");
         } catch (Exception e) {
             log.error("", e);
         }
