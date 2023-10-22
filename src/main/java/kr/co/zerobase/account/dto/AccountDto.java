@@ -11,6 +11,7 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class AccountDto {
+
     private final Long userId;
     private final String accountNumber;
     private final Long balance;

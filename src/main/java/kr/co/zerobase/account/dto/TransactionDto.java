@@ -29,7 +29,7 @@ public class TransactionDto {
             .transactionResultType(transaction.getTransactionResultType())
             .amount(transaction.getAmount())
             .balanceSnapshot(transaction.getBalanceSnapshot())
-            .transactionId(transaction.getTransactionId().toString())
+            .transactionId(transaction.getTransactionId())
             .transactedAt(transaction.getTransactedAt())
             .build();
     }

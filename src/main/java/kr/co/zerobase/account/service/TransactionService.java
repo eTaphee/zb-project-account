@@ -79,7 +79,8 @@ public class TransactionService {
     }
 
     @Transactional
-    public void saveFailedUseTransaction(TransactionType transactionType, String accountNumber, Long amount, ErrorCode errorCode) {
+    public void saveFailedUseTransaction(TransactionType transactionType, String accountNumber,
+        Long amount, ErrorCode errorCode) {
         Account account = getAccount(accountNumber);
 
         saveTransaction(transactionType, F, account, amount, false, null, errorCode);

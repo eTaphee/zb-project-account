@@ -19,6 +19,7 @@ public class CreateAccount {
     @Builder
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class RequestDto {
+
         @NotNull(message = USER_ID_NOT_NULL)
         @Min(value = 1, message = USER_ID_MIN_1)
         private final Long userId;
@@ -32,6 +33,7 @@ public class CreateAccount {
     @Builder
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class ResponseDto {
+
         private final Long userId;
         private final String accountNumber;
         private final LocalDateTime registeredAt;

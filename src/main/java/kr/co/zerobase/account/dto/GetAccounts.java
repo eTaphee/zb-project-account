@@ -11,6 +11,7 @@ public class GetAccounts {
     @Builder
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class AccountInfoDto {
+
         private final String accountNumber;
         private final long balance;
 
