@@ -1,5 +1,6 @@
 package kr.co.zerobase.account.config;
 
+import java.io.IOException;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +18,7 @@ public class LocalRedisConfig {
     private RedisServer redisServer;
 
     @PostConstruct
-    public void startRedis() {
+    public void startRedis() throws IOException {
         redisServer = new RedisServer(redisPort);
         try {
             redisServer.start();
@@ -28,7 +29,7 @@ public class LocalRedisConfig {
     }
 
     @PreDestroy
-    public void stopRedis() {
+    public void stopRedis() throws IOException {
         if (redisServer != null) {
             redisServer.stop();
         }

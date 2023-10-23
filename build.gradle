@@ -26,7 +26,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.redisson:redisson:3.17.1'
-    implementation('it.ozimov:embedded-redis:0.7.3') {
+    implementation('com.github.codemonstur:embedded-redis:1.0.0') {
         exclude group: "org.slf4j", module: "slf4j-simple"
     }
     compileOnly 'org.projectlombok:lombok'
